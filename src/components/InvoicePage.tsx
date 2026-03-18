@@ -294,6 +294,19 @@ export default function InvoicePage({
       pdf.addImage(imgData, 'PNG', 0, 0, 8.5, 11); 
       pdf.save(`Billcloud_Invoice_${invoice.number}.pdf`);
       
+      // Auto-save client if new
+      const clientExists = savedClients.some(c => c.name.toLowerCase() === client.name.toLowerCase());
+      if (!clientExists && client.name) {
+        const newClientPayload = { name: client.name, email: client.email, address: client.address };
+        if (user) {
+          const { data: newDbClient } = await supabase.from('clients').insert({ ...newClientPayload, user_id: user.id }).select();
+          if (newDbClient) setSavedClients(prev => [newDbClient[0], ...prev]);
+        } else {
+          const newLocalClient = { ...newClientPayload, id: Date.now() };
+          setSavedClients(prev => [newLocalClient, ...prev]);
+        }
+      }
+
       // Save to My Invoices automatically
       const newInvoice = {
         number: invoice.number,
@@ -1554,30 +1567,7 @@ export default function InvoicePage({
                 </div>
               </div>
 
-              {/* SEO Content at the bottom of Builder for Niche pages */}
-              <div className="no-print mt-20">
-                <div className="max-w-[1000px] mx-auto px-6 pb-20">
-                  <section className="mb-24">
-                    <h2 className="text-3xl font-black mb-12 text-center text-foreground">
-                      Comprehensive Invoicing FAQ
-                    </h2>
-                    <div className="space-y-2">
-                      <FAQItem 
-                        question="Do I need to include my SSN on an invoice?" 
-                        answer="No, and you shouldn't for security reasons. Use an EIN (Employer Identification Number) instead. It's free to get from the IRS and protects your personal identity."
-                      />
-                      <FAQItem 
-                        question="What is the standard invoice size in the US?" 
-                        answer="The standard size is US Letter (8.5 x 11 inches). Billcloud is pre-configured to output high-resolution PDFs in this exact format for perfect printing and filing."
-                      />
-                      <FAQItem 
-                        question="Should I charge sales tax for consulting services?" 
-                        answer="In most US states, pure professional services are not taxable. However, some states (like Hawaii or New Mexico) tax nearly everything. Check your local Department of Revenue guidelines."
-                      />
-                    </div>
-                  </section>
-                </div>
-              </div>
+
             </div>
           )}
         </main>
