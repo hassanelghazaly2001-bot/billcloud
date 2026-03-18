@@ -36,6 +36,24 @@ export default function InvoicePage({
   const [showUpsellModal, setShowUpsellModal] = useState(false);
   const [view, setView] = useState<'landing' | 'new-invoice' | 'privacy' | 'terms'>('landing');
 
+  interface SavedInvoice {
+    id: number | string;
+    number: string;
+    client_name: string;
+    date: string;
+    total: string;
+    status: string;
+    data: any;
+  }
+
+  interface SavedClient {
+    id: number | string;
+    name: string;
+    email: string;
+    address: string;
+    phone?: string;
+  }
+
   // 1. Auth & Data Management
   useEffect(() => {
     setMounted(true);
@@ -112,8 +130,8 @@ export default function InvoicePage({
   const [client, setClient] = useState({ name: '', address: '', email: '', phone: '' });
   
   // My Invoices & Clients state
-  const [savedInvoices, setSavedInvoices] = useState<any[]>([]);
-  const [savedClients, setSavedClients] = useState<any[]>([]);
+  const [savedInvoices, setSavedInvoices] = useState<SavedInvoice[]>([]);
+  const [savedClients, setSavedClients] = useState<SavedClient[]>([]);
   
   // US Date format MM/DD/YYYY
   const getTodayUS = () => {
@@ -424,7 +442,7 @@ export default function InvoicePage({
   };
 
   const Sidebar = () => {
-    const handleNavClick = (tab: any) => {
+    const handleNavClick = (tab: 'dashboard' | 'builder' | 'invoices' | 'clients' | 'settings') => {
       if (!user && (tab === 'dashboard' || tab === 'invoices' || tab === 'clients' || tab === 'settings')) {
         supabase.auth.signInWithOAuth({ provider: 'google' });
         return;
@@ -676,7 +694,7 @@ export default function InvoicePage({
       }
     };
 
-    const downloadSavedInvoice = async (inv: any) => {
+    const downloadSavedInvoice = async (inv: SavedInvoice) => {
       // Temporarily set the state to the saved invoice data to generate PDF
       setLogo(inv.data.logo);
       setCompany(inv.data.company);
@@ -695,7 +713,7 @@ export default function InvoicePage({
       }, 500);
     };
 
-    const editInvoice = (inv: any) => {
+    const editInvoice = (inv: SavedInvoice) => {
       setLogo(inv.data.logo);
       setCompany(inv.data.company);
       setClient(inv.data.client);
