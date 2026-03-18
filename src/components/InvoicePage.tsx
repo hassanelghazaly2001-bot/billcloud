@@ -6,12 +6,12 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { supabase } from '../lib/supabaseClient';
 
-export const Logo = ({ darkMode }: { darkMode: boolean }) => (
+export const Logo = () => (
   <div className="flex items-center gap-2.5">
     <div className="bg-gradient-to-br from-[#22d3ee] to-[#0891b2] w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-cyan-500/20">
       B
     </div>
-    <span className={`text-xl font-extrabold tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>Billcloud</span>
+    <span className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Billcloud</span>
   </div>
 );
 
@@ -30,6 +30,7 @@ export default function InvoicePage({
 }: InvoicePageProps) {
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const prevUser = useRef<any>(null);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'builder' | 'invoices' | 'clients' | 'settings'>('builder');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showUpsellModal, setShowUpsellModal] = useState(false);
@@ -42,6 +43,7 @@ export default function InvoicePage({
     const handleAuth = async (session: any) => {
       if (session?.user) {
         setUser(session.user);
+        prevUser.current = session.user;
         setView('new-invoice');
         setActiveTab('dashboard');
         
@@ -73,8 +75,12 @@ export default function InvoicePage({
           } catch (e) { console.error('Sync clients failed', e); }
         }
       } else {
+        const isLoggingOut = prevUser.current !== null;
         setUser(null);
-        setView('landing');
+        prevUser.current = null;
+        if (isLoggingOut) {
+          setView('landing');
+        }
       }
     };
 
@@ -92,6 +98,15 @@ export default function InvoicePage({
   }, []);
 
   const [darkMode, setDarkMode] = useState(false);
+
+  // 2. Dark Mode Management
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
   const [logo, setLogo] = useState<string | null>(null);
   const [company, setCompany] = useState({ name: '', address: '', phone: '', email: '' });
   const [client, setClient] = useState({ name: '', address: '', email: '' });
@@ -131,14 +146,12 @@ export default function InvoicePage({
   // Ad Slot Component
   const AdSlot = ({ className, type = 'horizontal', label = 'Advertisement' }: { className?: string, type?: 'horizontal' | 'vertical', label?: string }) => (
     <div 
-      className={`no-print flex items-center justify-center bg-slate-100 border border-slate-200 rounded-xl overflow-hidden transition-all duration-300 ${className}`}
+      className={`no-print flex items-center justify-center bg-secondary border border-card-border rounded-xl overflow-hidden transition-all duration-300 ${className}`}
       style={{ 
-        minHeight: type === 'horizontal' ? '90px' : '600px',
-        backgroundColor: darkMode ? '#1e293b' : '#f1f5f9',
-        borderColor: darkMode ? '#334155' : '#e2e8f0'
+        minHeight: type === 'horizontal' ? '90px' : '600px'
       }}
     >
-      <span className="text-[10px] font-black uppercase tracking-widest opacity-30 select-none">
+      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-30 select-none">
         {label}
       </span>
     </div>
@@ -330,17 +343,17 @@ export default function InvoicePage({
   const FAQItem = ({ question, answer }: { question: string, answer: string }) => {
     const [isOpen, setIsOpen] = useState(false);
     return (
-      <div className="border-b transition-colors" style={{ borderColor: darkMode ? '#1e293b' : '#e2e8f0' }}>
+      <div className="border-b transition-colors border-card-border">
         <button 
           onClick={() => setIsOpen(!isOpen)}
           className="w-full py-6 flex justify-between items-center text-left hover:opacity-80 transition-opacity"
         >
-          <span className="text-lg font-bold" style={{ color: darkMode ? '#ffffff' : '#0f172a' }}>{question}</span>
-          {isOpen ? <ChevronUp size={20} className="text-cyan-500" /> : <ChevronDown size={20} className="text-slate-400" />}
+          <span className="text-lg font-bold text-foreground">{question}</span>
+          {isOpen ? <ChevronUp size={20} className="text-cyan-500" /> : <ChevronDown size={20} className="text-muted-foreground" />}
         </button>
         {isOpen && (
           <div className="pb-6 animate-in fade-in slide-in-from-top-2 duration-300">
-            <p className="text-base leading-relaxed" style={{ color: darkMode ? '#94a3b8' : '#475569' }}>{answer}</p>
+            <p className="text-base leading-relaxed text-muted">{answer}</p>
           </div>
         )}
       </div>
@@ -352,11 +365,11 @@ export default function InvoicePage({
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
         <div 
-          className="w-full max-w-md rounded-3xl shadow-2xl p-8 space-y-6 relative border border-slate-200 bg-white animate-in zoom-in-95 duration-300"
+          className="w-full max-w-md rounded-3xl shadow-2xl p-8 space-y-6 relative border border-card-border bg-card animate-in zoom-in-95 duration-300"
         >
           <button 
             onClick={() => setShowUpsellModal(false)}
-            className="absolute top-6 right-6 p-2 rounded-full transition-colors hover:bg-slate-100 text-slate-400"
+            className="absolute top-6 right-6 p-2 rounded-full transition-colors hover:bg-secondary text-muted-foreground"
           >
             <X size={20} />
           </button>
@@ -365,15 +378,15 @@ export default function InvoicePage({
             <div className="mx-auto w-20 h-20 bg-cyan-500/10 rounded-3xl flex items-center justify-center text-cyan-500 mb-2">
               <FileText size={40} />
             </div>
-            <h3 className="text-3xl font-black text-slate-900">Don't lose your data!</h3>
-            <p className="text-base leading-relaxed text-slate-500">
+            <h3 className="text-3xl font-black text-foreground">Don't lose your data!</h3>
+            <p className="text-base leading-relaxed text-muted">
               Create a free account to save this invoice and manage your clients automatically.
             </p>
           </div>
 
           <div className="space-y-4 pt-2">
             <button 
-              className="w-full flex items-center justify-center gap-4 bg-white border border-slate-200 text-slate-700 py-4 rounded-2xl font-black text-base hover:bg-slate-50 transition-all shadow-xl shadow-slate-200/20"
+              className="w-full flex items-center justify-center gap-4 bg-card border border-card-border text-foreground py-4 rounded-2xl font-black text-base hover:bg-secondary transition-all shadow-xl shadow-cyan-500/5"
               onClick={() => supabase.auth.signInWithOAuth({ provider: 'google' })}
             >
               <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6" />
@@ -381,7 +394,7 @@ export default function InvoicePage({
             </button>
             <button 
               onClick={() => setShowUpsellModal(false)}
-              className="w-full py-2 rounded-xl font-bold text-sm transition-all text-slate-400"
+              className="w-full py-2 rounded-xl font-bold text-sm transition-all text-muted-foreground hover:text-foreground"
             >
               Maybe Later
             </button>
@@ -402,18 +415,14 @@ export default function InvoicePage({
 
     return (
       <div 
-        className={`fixed lg:relative inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out border-r no-print ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-20'} `}
-        style={{ 
-          backgroundColor: '#ffffff', 
-          borderColor: '#e2e8f0' 
-        }}
+        className={`fixed lg:relative inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out border-r no-print bg-card border-card-border ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-20'} `}
       >
         <div className="h-full flex flex-col p-4">
           <div className="flex items-center justify-between mb-10 px-2">
-            {sidebarOpen ? <Logo darkMode={darkMode} /> : <div className="bg-gradient-to-br from-[#22d3ee] to-[#0891b2] w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-cyan-500/20">B</div>}
+            {sidebarOpen ? <Logo /> : <div className="bg-gradient-to-br from-[#22d3ee] to-[#0891b2] w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-cyan-500/20">B</div>}
             <button 
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="hidden lg:block p-1.5 rounded-lg hover:bg-slate-100 transition-colors text-slate-400"
+              className="hidden lg:block p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-400"
             >
               {sidebarOpen ? <ArrowLeft size={18} /> : <Menu size={18} />}
             </button>
@@ -430,10 +439,7 @@ export default function InvoicePage({
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id as any)}
-                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl font-bold transition-all ${activeTab === item.id ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/20' : 'hover:bg-slate-100 text-slate-500'}`}
-                style={{ 
-                  color: activeTab === item.id ? '#ffffff' : undefined
-                }}
+                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl font-bold transition-all ${activeTab === item.id ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/20' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400'}`}
               >
                 <item.icon size={20} />
                 {sidebarOpen && <span className="text-sm">{item.label}</span>}
@@ -441,12 +447,12 @@ export default function InvoicePage({
             ))}
           </nav>
 
-          <div className="pt-6 border-t mt-6 border-slate-100">
+          <div className="pt-6 border-t mt-6 border-slate-100 dark:border-slate-800">
             {user ? (
               <div className="space-y-4">
                 <button 
                   onClick={() => supabase.auth.signOut()}
-                  className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl font-bold transition-all hover:bg-red-50 text-red-500`}
+                  className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl font-bold transition-all hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500`}
                 >
                   <LogOut size={20} />
                   {sidebarOpen && <span className="text-sm">Sign Out</span>}
@@ -455,7 +461,7 @@ export default function InvoicePage({
             ) : (
               <button 
                 onClick={() => supabase.auth.signInWithOAuth({ provider: 'google' })}
-                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl font-bold transition-all hover:bg-slate-100 text-slate-500`}
+                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl font-bold transition-all hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400`}
               >
                 <LogIn size={20} />
                 {sidebarOpen && <span className="text-sm">Sign In</span>}
@@ -469,17 +475,13 @@ export default function InvoicePage({
 
   const Header = () => (
     <header 
-      className="w-full transition-colors duration-300 no-print border-b px-6 py-4 flex justify-between items-center sticky top-0 z-40"
-      style={{ 
-        backgroundColor: '#ffffff', 
-        borderColor: '#e2e8f0' 
-      }}
+      className="w-full transition-colors duration-300 no-print border-b px-6 py-4 flex justify-between items-center sticky top-0 z-40 bg-card border-card-border"
     >
       <div className="flex items-center gap-4">
-        <Logo darkMode={darkMode} />
+        <Logo />
         {user && (
           <div className="hidden md:block">
-            <h1 className="text-xl font-black text-slate-900">
+            <h1 className="text-xl font-black text-slate-900 dark:text-white">
               {activeTab === 'builder' ? 'Invoice Builder' : 
                activeTab === 'dashboard' ? 'Dashboard' : 
                activeTab === 'invoices' ? 'Invoices History' : 
@@ -491,20 +493,19 @@ export default function InvoicePage({
       <div className="flex items-center gap-4">
         {user ? (
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
               <img 
                 src={user.user_metadata.avatar_url} 
                 alt="Profile" 
                 className="w-6 h-6 rounded-full"
               />
-              <span className="text-xs font-bold hidden sm:inline text-slate-600">
+              <span className="text-xs font-bold hidden sm:inline text-slate-600 dark:text-slate-300">
                 {user.user_metadata.full_name}
               </span>
             </div>
             <button 
               onClick={() => setDarkMode(!darkMode)}
-              className="p-2 rounded-lg transition-all duration-300 border border-slate-200 bg-slate-50"
-              style={{ color: darkMode ? '#facc15' : '#475569' }}
+              className="p-2 rounded-lg transition-all duration-300 border border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 text-slate-600 dark:text-yellow-400"
             >
               {darkMode ? <Sun size={18} /> : <Moon size={18} />}
             </button>
@@ -513,7 +514,7 @@ export default function InvoicePage({
           <div className="flex items-center gap-6">
             <button 
               onClick={() => supabase.auth.signInWithOAuth({ provider: 'google' })}
-              className="text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors"
+              className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
             >
               Login
             </button>
@@ -525,8 +526,7 @@ export default function InvoicePage({
             </button>
             <button 
               onClick={() => setDarkMode(!darkMode)}
-              className="p-2 rounded-lg transition-all duration-300 border border-slate-200 bg-slate-50"
-              style={{ color: darkMode ? '#facc15' : '#475569' }}
+              className="p-2 rounded-lg transition-all duration-300 border border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 text-slate-600 dark:text-yellow-400"
             >
               {darkMode ? <Sun size={18} /> : <Moon size={18} />}
             </button>
@@ -538,10 +538,10 @@ export default function InvoicePage({
 
   const HeroSection = () => (
     <section className="py-24 px-6 text-center space-y-8 max-w-4xl mx-auto flex flex-col items-center justify-center min-h-[70vh]">
-      <h1 className="text-5xl md:text-7xl font-black tracking-tight text-slate-900 leading-tight">
+      <h1 className="text-5xl md:text-7xl font-black tracking-tight text-foreground leading-tight">
         Professional Invoicing for <br/> <span className="text-cyan-500">US Freelancers</span>. 100% Free.
       </h1>
-      <p className="text-xl md:text-2xl max-w-2xl mx-auto text-slate-500">
+      <p className="text-xl md:text-2xl max-w-2xl mx-auto text-muted">
         Download high-resolution PDFs instantly. US Letter Standard. No credit card, no hidden fees.
       </p>
       <div className="pt-4">
@@ -559,10 +559,10 @@ export default function InvoicePage({
     <div className="p-6 md:p-10 space-y-10 max-w-6xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-black mb-2 text-slate-900">
+          <h1 className="text-3xl font-black mb-2 text-foreground">
             Welcome, {user?.user_metadata?.full_name?.split(' ')[0] || 'to BillCloud'}
           </h1>
-          <p className="text-slate-500">Here's what's happening with your invoices.</p>
+          <p className="text-muted">Here's what's happening with your invoices.</p>
         </div>
         <button 
           onClick={() => setActiveTab('builder')}
@@ -579,14 +579,14 @@ export default function InvoicePage({
           { label: 'Total Clients', value: savedClients.length, icon: Users, color: 'text-purple-500', bg: 'bg-purple-500/10' },
           { label: 'Pending Invoices', value: savedInvoices.filter(inv => inv.status === 'Pending').length, icon: Phone, color: 'text-amber-500', bg: 'bg-amber-500/10' },
         ].map((stat, i) => (
-          <div key={i} className="p-6 rounded-2xl border border-slate-200 bg-white transition-all">
+          <div key={i} className="p-6 rounded-2xl border border-card-border bg-card transition-all">
             <div className="flex items-center gap-4">
               <div className={`p-3 rounded-xl ${stat.bg} ${stat.color}`}>
                 <stat.icon size={24} />
               </div>
               <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-slate-400">{stat.label}</p>
-                <p className="text-2xl font-black text-slate-900">{stat.value}</p>
+                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{stat.label}</p>
+                <p className="text-2xl font-black text-foreground">{stat.value}</p>
               </div>
             </div>
           </div>
@@ -594,17 +594,17 @@ export default function InvoicePage({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="p-6 rounded-2xl border border-slate-200 bg-white space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-            <h3 className="font-bold text-slate-900">Recent Invoices</h3>
+        <div className="p-6 rounded-2xl border border-card-border bg-card space-y-6">
+          <div className="flex items-center justify-between border-b border-card-border pb-4">
+            <h3 className="font-bold text-foreground">Recent Invoices</h3>
             <button onClick={() => setActiveTab('invoices')} className="text-xs font-bold text-cyan-500 hover:underline">View All</button>
           </div>
           <div className="space-y-4">
             {savedInvoices.slice(0, 5).map((inv) => (
               <div key={inv.id} className="flex items-center justify-between text-sm">
                 <div>
-                  <p className="font-bold text-slate-700">{inv.client_name || inv.clientName}</p>
-                  <p className="text-xs text-slate-400">{inv.number} • {inv.date}</p>
+                  <p className="font-bold text-foreground opacity-90">{inv.client_name || inv.clientName}</p>
+                  <p className="text-xs text-muted-foreground">{inv.number} • {inv.date}</p>
                 </div>
                 <div className="text-right">
                   <p className="font-bold text-cyan-600">${inv.total}</p>
@@ -612,32 +612,32 @@ export default function InvoicePage({
                 </div>
               </div>
             ))}
-            {savedInvoices.length === 0 && <p className="text-center py-4 text-sm text-slate-400">No invoices yet.</p>}
+            {savedInvoices.length === 0 && <p className="text-center py-4 text-sm text-muted-foreground">No invoices yet.</p>}
           </div>
         </div>
 
-        <div className="p-6 rounded-2xl border border-slate-200 bg-white space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-            <h3 className="font-bold text-slate-900">Quick Actions</h3>
+        <div className="p-6 rounded-2xl border border-card-border bg-card space-y-6">
+          <div className="flex items-center justify-between border-b border-card-border pb-4">
+            <h3 className="font-bold text-foreground">Quick Actions</h3>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <button 
               onClick={() => setActiveTab('builder')}
-              className="p-4 rounded-xl border border-slate-200 bg-slate-50 flex flex-col items-center gap-2 hover:border-cyan-500 transition-all group"
+              className="p-4 rounded-xl border border-card-border bg-secondary flex flex-col items-center gap-2 hover:border-cyan-500 transition-all group"
             >
               <div className="p-3 rounded-full bg-cyan-500/10 text-cyan-500 group-hover:bg-cyan-500 group-hover:text-white transition-all">
                 <Plus size={20} />
               </div>
-              <span className="text-xs font-bold text-slate-700">New Invoice</span>
+              <span className="text-xs font-bold text-foreground opacity-80">New Invoice</span>
             </button>
             <button 
               onClick={() => setActiveTab('clients')}
-              className="p-4 rounded-xl border border-slate-200 bg-slate-50 flex flex-col items-center gap-2 hover:border-cyan-500 transition-all group"
+              className="p-4 rounded-xl border border-card-border bg-secondary flex flex-col items-center gap-2 hover:border-cyan-500 transition-all group"
             >
               <div className="p-3 rounded-full bg-purple-500/10 text-purple-500 group-hover:bg-purple-500 group-hover:text-white transition-all">
                 <Users size={20} />
               </div>
-              <span className="text-xs font-bold text-slate-700">Add Client</span>
+              <span className="text-xs font-bold text-foreground opacity-80">Add Client</span>
             </button>
           </div>
         </div>
@@ -693,7 +693,7 @@ export default function InvoicePage({
     return (
       <div className="p-6 md:p-10 space-y-8 max-w-6xl mx-auto">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-black text-slate-900">Invoices History</h1>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white">Invoices History</h1>
           <button 
             onClick={() => setActiveTab('builder')}
             className="flex items-center gap-2 bg-cyan-500 text-white px-5 py-2.5 rounded-xl font-bold text-sm"
@@ -703,11 +703,11 @@ export default function InvoicePage({
           </button>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-card shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="text-xs font-bold uppercase tracking-widest border-b border-slate-100 bg-slate-50 text-slate-400">
+                <tr className="text-xs font-bold uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-slate-400">
                   <th className="p-4">Invoice #</th>
                   <th className="p-4">Client Name</th>
                   <th className="p-4">Date</th>
@@ -716,12 +716,12 @@ export default function InvoicePage({
                   <th className="p-4 text-center">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {savedInvoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="p-4 font-bold text-sm text-slate-700">{inv.number}</td>
-                    <td className="p-4 text-sm text-slate-500">{inv.client_name || inv.clientName}</td>
-                    <td className="p-4 text-sm text-slate-500">{inv.date}</td>
+                  <tr key={inv.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                    <td className="p-4 font-bold text-sm text-slate-700 dark:text-slate-300">{inv.number}</td>
+                    <td className="p-4 text-sm text-slate-500 dark:text-slate-400">{inv.client_name || inv.clientName}</td>
+                    <td className="p-4 text-sm text-slate-500 dark:text-slate-400">{inv.date}</td>
                     <td className="p-4 text-sm font-black text-right text-cyan-600">${inv.total}</td>
                     <td className="p-4">
                       <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-full ${inv.status === 'Paid' ? 'bg-green-500/10 text-green-500' : 'bg-amber-500/10 text-amber-500'}`}>
@@ -730,9 +730,9 @@ export default function InvoicePage({
                     </td>
                     <td className="p-4">
                       <div className="flex items-center justify-center gap-2">
-                        <button onClick={() => editInvoice(inv)} title="View/Edit" className="p-2 rounded-lg hover:bg-cyan-50 text-cyan-500 transition-colors"><Edit size={16} /></button>
-                        <button onClick={() => downloadSavedInvoice(inv)} title="Download" className="p-2 rounded-lg hover:bg-blue-50 text-blue-500 transition-colors"><Download size={16} /></button>
-                        <button onClick={() => deleteInvoice(inv.id)} title="Delete" className="p-2 rounded-lg hover:bg-red-50 text-red-500 transition-colors"><Trash size={16} /></button>
+                        <button onClick={() => editInvoice(inv)} title="View/Edit" className="p-2 rounded-lg hover:bg-cyan-50 dark:hover:bg-cyan-900/20 text-cyan-500 transition-colors"><Edit size={16} /></button>
+                        <button onClick={() => downloadSavedInvoice(inv)} title="Download" className="p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-500 transition-colors"><Download size={16} /></button>
+                        <button onClick={() => deleteInvoice(inv.id)} title="Delete" className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 transition-colors"><Trash size={16} /></button>
                       </div>
                     </td>
                   </tr>
@@ -794,17 +794,17 @@ export default function InvoicePage({
     return (
       <div className="p-6 md:p-10 space-y-8 max-w-6xl mx-auto">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-black text-slate-900">Clients</h1>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white">Clients</h1>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Add Client Form */}
-          <div className="lg:col-span-1 p-6 rounded-2xl border border-slate-200 bg-white h-fit shadow-sm">
-            <h3 className="font-bold mb-6 text-slate-900">Add New Client</h3>
+          <div className="lg:col-span-1 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-card h-fit shadow-sm">
+            <h3 className="font-bold mb-6 text-slate-900 dark:text-white">Add New Client</h3>
             <form onSubmit={addClient} className="space-y-4">
               <input 
                 placeholder="Client Name"
-                className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 text-sm outline-none focus:border-cyan-500 transition-all text-slate-900"
+                className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-sm outline-none focus:border-cyan-500 transition-all text-slate-900 dark:text-white"
                 value={newClient.name}
                 onChange={e => setNewClient({...newClient, name: e.target.value})}
                 required
@@ -812,13 +812,13 @@ export default function InvoicePage({
               <input 
                 type="email"
                 placeholder="Email Address"
-                className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 text-sm outline-none focus:border-cyan-500 transition-all text-slate-900"
+                className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-sm outline-none focus:border-cyan-500 transition-all text-slate-900 dark:text-white"
                 value={newClient.email}
                 onChange={e => setNewClient({...newClient, email: e.target.value})}
               />
               <textarea 
                 placeholder="Address"
-                className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 text-sm outline-none focus:border-cyan-500 transition-all min-h-[100px] text-slate-900"
+                className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-sm outline-none focus:border-cyan-500 transition-all min-h-[100px] text-slate-900 dark:text-white"
                 value={newClient.address}
                 onChange={e => setNewClient({...newClient, address: e.target.value})}
               />
@@ -829,28 +829,28 @@ export default function InvoicePage({
           </div>
 
           {/* Clients Table */}
-          <div className="lg:col-span-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="lg:col-span-2 overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-card shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="text-xs font-bold uppercase tracking-widest border-b border-slate-100 bg-slate-50 text-slate-400">
+                  <tr className="text-xs font-bold uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-slate-400">
                     <th className="p-4">Name</th>
                     <th className="p-4">Contact</th>
                     <th className="p-4 text-center">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {savedClients.map((c) => (
-                    <tr key={c.id} className="hover:bg-slate-50 transition-colors">
+                    <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                       <td className="p-4">
-                        <p className="font-bold text-sm text-slate-700">{c.name}</p>
+                        <p className="font-bold text-sm text-slate-700 dark:text-slate-300">{c.name}</p>
                         <p className="text-xs text-slate-400 truncate max-w-[200px]">{c.address}</p>
                       </td>
-                      <td className="p-4 text-sm text-slate-500">{c.email || 'No email'}</td>
+                      <td className="p-4 text-sm text-slate-500 dark:text-slate-400">{c.email || 'No email'}</td>
                       <td className="p-4">
                         <div className="flex items-center justify-center gap-2">
-                          <button className="p-2 rounded-lg hover:bg-amber-50 text-amber-500 transition-colors"><Edit size={16} /></button>
-                          <button onClick={() => deleteClient(c.id)} className="p-2 rounded-lg hover:bg-red-50 text-red-500 transition-colors"><Trash size={16} /></button>
+                          <button className="p-2 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-500 transition-colors"><Edit size={16} /></button>
+                          <button onClick={() => deleteClient(c.id)} className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 transition-colors"><Trash size={16} /></button>
                         </div>
                       </td>
                     </tr>
@@ -874,31 +874,30 @@ export default function InvoicePage({
 
   const SettingsView = () => (
     <div className="p-6 md:p-10 space-y-8 max-w-3xl mx-auto">
-      <h1 className="text-3xl font-black text-slate-900">Settings</h1>
+      <h1 className="text-3xl font-black text-slate-900 dark:text-white">Settings</h1>
       
       <div className="space-y-6">
-        <section className="p-6 rounded-2xl border border-slate-200 bg-white space-y-4">
-          <h3 className="font-bold text-slate-900">Appearance</h3>
+        <section className="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-card space-y-4 shadow-sm">
+          <h3 className="font-bold text-slate-900 dark:text-white">Appearance</h3>
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-bold text-sm text-slate-700">Dark Mode</p>
+              <p className="font-bold text-sm text-slate-700 dark:text-slate-300">Dark Mode</p>
               <p className="text-xs text-slate-400">Adjust the app's visual theme.</p>
             </div>
             <button 
               onClick={() => setDarkMode(!darkMode)}
-              className="p-3 rounded-xl border border-slate-200 bg-slate-50 transition-all"
-              style={{ color: darkMode ? '#facc15' : '#475569' }}
+              className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 transition-all text-slate-600 dark:text-yellow-400"
             >
               {darkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
           </div>
         </section>
 
-        <section className="p-6 rounded-2xl border border-slate-200 bg-white space-y-4">
+        <section className="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-card space-y-4 shadow-sm">
           <h3 className="font-bold text-red-500">Danger Zone</h3>
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-bold text-sm text-slate-700">Clear All Data</p>
+              <p className="font-bold text-sm text-slate-700 dark:text-slate-300">Clear All Data</p>
               <p className="text-xs text-slate-400">Wipe all local invoices and clients.</p>
             </div>
             <button 
@@ -908,7 +907,7 @@ export default function InvoicePage({
                   window.location.reload();
                 }
               }}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg font-bold text-sm"
+              className="px-4 py-2 bg-red-500 text-white rounded-lg font-bold text-sm hover:bg-red-600 transition-colors"
             >
               Reset App
             </button>
@@ -924,20 +923,16 @@ export default function InvoicePage({
   if (view === 'landing' || view === 'privacy' || view === 'terms') {
     return (
       <div 
-        className="min-h-screen flex flex-col font-sans transition-colors duration-300 overflow-y-auto"
-        style={{ 
-          backgroundColor: '#F9FAFB', 
-          color: '#0f172a' 
-        }}
+        className="min-h-screen flex flex-col font-sans transition-colors duration-300 overflow-y-auto bg-background text-foreground"
       >
-        <header className="border-b no-print sticky top-0 z-50 bg-white" style={{ borderColor: '#e2e8f0' }}>
+        <header className="border-b no-print sticky top-0 z-50 bg-card border-card-border">
           <div className="max-w-[1200px] mx-auto px-6 py-4 flex justify-between items-center">
-            <Logo darkMode={darkMode} />
+            <Logo />
             <div className="flex items-center gap-6">
               {view !== 'landing' && (
                 <button 
                   onClick={() => setView('landing')}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all border border-card-border bg-secondary text-foreground hover:bg-secondary/80"
                 >
                   <ArrowLeft size={16} />
                   Back to Home
@@ -945,7 +940,7 @@ export default function InvoicePage({
               )}
               <button 
                 onClick={() => supabase.auth.signInWithOAuth({ provider: 'google' })}
-                className="text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors"
+                className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors"
               >
                 Login
               </button>
@@ -954,6 +949,12 @@ export default function InvoicePage({
                 className="bg-cyan-500 hover:bg-cyan-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-cyan-500/20 transition-all"
               >
                 Sign Up - It's Free
+              </button>
+              <button 
+                onClick={() => setDarkMode(!darkMode)}
+                className="p-2 rounded-lg transition-all duration-300 border border-card-border bg-secondary text-muted-foreground hover:text-foreground dark:text-yellow-400"
+              >
+                {darkMode ? <Sun size={18} /> : <Moon size={18} />}
               </button>
             </div>
           </div>
@@ -965,7 +966,7 @@ export default function InvoicePage({
               <HeroSection />
               <div className="max-w-[1000px] mx-auto px-6 pb-20">
                 <section className="mb-24">
-                  <h2 className="text-3xl font-black mb-12 text-center text-slate-900">
+                  <h2 className="text-3xl font-black mb-12 text-center text-foreground">
                     Comprehensive Invoicing FAQ
                   </h2>
                   <div className="space-y-2">
@@ -987,39 +988,39 @@ export default function InvoicePage({
             </div>
           ) : view === 'privacy' ? (
             <div className="max-w-[800px] mx-auto px-6 py-12 md:py-20">
-              <article className="prose prose-slate lg:prose-lg max-w-none text-slate-600">
-                <h1 className="text-4xl font-black mb-8 text-slate-900">Privacy Policy</h1>
+              <article className="prose dark:prose-invert lg:prose-lg max-w-none text-muted">
+                <h1 className="text-4xl font-black mb-8 text-foreground">Privacy Policy</h1>
                 <p className="text-lg mb-6">Last Updated: March 2026</p>
                 
                 <section className="mb-10">
-                  <h2 className="text-2xl font-bold mb-4 text-cyan-700">1. Privacy by Design</h2>
+                  <h2 className="text-2xl font-bold mb-4 text-cyan-500">1. Privacy by Design</h2>
                   <p>Billcloud is built with a "Privacy First" philosophy. Unlike other invoice generators, <strong>we do not store your data on our servers</strong>. All information you enter into our tool—including business names, client details, and financial amounts—is processed locally in your web browser.</p>
                 </section>
 
                 <section className="mb-10">
-                  <h2 className="text-2xl font-bold mb-4 text-cyan-700">2. Advertising & Cookies</h2>
+                  <h2 className="text-2xl font-bold mb-4 text-cyan-500">2. Advertising & Cookies</h2>
                   <p>We do not collect personal information. However, to keep this service free, we use <strong>Google AdSense</strong> to serve advertisements. Google AdSense uses cookies to serve ads based on your prior visits to this website or other websites. By using this service, you consent to the use of cookies for personalized advertising.</p>
                 </section>
 
                 <section className="mb-10">
-                  <h2 className="text-2xl font-bold mb-4 text-cyan-700">3. Local Storage</h2>
+                  <h2 className="text-2xl font-bold mb-4 text-cyan-500">3. Local Storage</h2>
                   <p>For your convenience, our tool may use "Local Storage" in your browser to save your progress. This data never leaves your computer and can be cleared at any time by clearing your browser cache.</p>
                 </section>
               </article>
             </div>
           ) : (
             <div className="max-w-[800px] mx-auto px-6 py-12 md:py-20">
-              <article className="prose prose-slate lg:prose-lg max-w-none text-slate-600">
-                <h1 className="text-4xl font-black mb-8 text-slate-900">Terms of Service</h1>
+              <article className="prose dark:prose-invert lg:prose-lg max-w-none text-muted">
+                <h1 className="text-4xl font-black mb-8 text-foreground">Terms of Service</h1>
                 <p className="text-lg mb-6">Last Updated: March 2026</p>
 
                 <section className="mb-10">
-                  <h2 className="text-2xl font-bold mb-4 text-cyan-700">1. Acceptance of Terms</h2>
+                  <h2 className="text-2xl font-bold mb-4 text-cyan-500">1. Acceptance of Terms</h2>
                   <p>By using Billcloud, you agree to these Terms of Service. If you do not agree, please do not use the service. Billcloud is provided as a free tool for US 1099 contractors, freelancers, and small businesses.</p>
                 </section>
 
                 <section className="mb-10">
-                  <h2 className="text-2xl font-bold mb-4 text-cyan-700">2. "As-Is" Service</h2>
+                  <h2 className="text-2xl font-bold mb-4 text-cyan-500">2. "As-Is" Service</h2>
                   <p>Billcloud is provided on an "as-is" and "as-available" basis. While we strive for accuracy, we do not guarantee that the invoices generated will be error-free or compliant with all local, state, or federal laws. <strong>You are solely responsible for verifying the accuracy of all financial data and tax calculations.</strong></p>
                 </section>
               </article>
@@ -1027,10 +1028,10 @@ export default function InvoicePage({
           )}
         </main>
 
-        <footer className="w-full py-12 border-t text-center bg-white border-slate-100">
+        <footer className="w-full py-12 border-t text-center bg-card border-card-border">
           <div className="max-w-[1200px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-            <p className="text-xs text-slate-400">&copy; 2026 Billcloud. All Rights Reserved.</p>
-            <div className="flex gap-6 text-xs font-bold text-slate-400 uppercase tracking-widest">
+            <p className="text-xs text-muted-foreground">&copy; 2026 Billcloud. All Rights Reserved.</p>
+            <div className="flex gap-6 text-xs font-bold text-muted-foreground uppercase tracking-widest">
               <button onClick={() => setView('privacy')} className="hover:text-cyan-500 transition-colors">Privacy Policy</button>
               <button onClick={() => setView('terms')} className="hover:text-cyan-500 transition-colors">Terms of Service</button>
             </div>
@@ -1042,11 +1043,7 @@ export default function InvoicePage({
 
   return (
     <div 
-      className="min-h-screen flex font-sans transition-colors duration-300 overflow-hidden"
-      style={{ 
-        backgroundColor: '#ffffff', 
-        color: '#0f172a' 
-      }}
+      className="min-h-screen flex font-sans transition-colors duration-300 overflow-hidden bg-background text-foreground"
     >
       {user && <Sidebar />}
       <UpsellModal />
@@ -1058,8 +1055,7 @@ export default function InvoicePage({
         {toast.visible && (
           <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] animate-bounce">
             <div 
-              className="text-white px-6 py-3 rounded-xl shadow-2xl font-bold text-sm"
-              style={{ backgroundColor: '#0891b2' }}
+              className="bg-cyan-600 text-white px-6 py-3 rounded-xl shadow-2xl font-bold text-sm"
             >
               {toast.message}
             </div>
@@ -1076,19 +1072,15 @@ export default function InvoicePage({
               <div id="builder-start" className="flex-1 flex flex-col lg:flex-row overflow-hidden">
                 {/* LEFT SIDE: INVOICE BUILDER */}
                 <div 
-                  className="w-full lg:w-[480px] lg:h-full overflow-y-auto p-4 md:p-6 no-print border-r transition-colors duration-300"
-                  style={{ 
-                    backgroundColor: darkMode ? '#ffffff' : '#ffffff', 
-                    borderColor: darkMode ? '#1e293b' : '#e2e8f0' 
-                  }}
+                  className="w-full lg:w-[480px] lg:h-full overflow-y-auto p-4 md:p-6 no-print border-r transition-colors duration-300 bg-card border-card-border"
                 >
                   <div className="space-y-6 pb-12 lg:pb-6">
                     {/* Company Details */}
                     <section 
-                      className="p-4 md:p-6 rounded-xl border border-slate-200 bg-white transition-colors duration-300 space-y-4 shadow-sm"
+                      className="p-4 md:p-6 rounded-xl border border-card-border bg-card transition-colors duration-300 space-y-4 shadow-sm"
                     >
                       <h2 
-                        className="text-sm font-bold border-b border-slate-100 pb-2 text-slate-900 transition-colors"
+                        className="text-sm font-bold border-b border-card-border pb-2 text-foreground transition-colors"
                       >
                         Company Details
                       </h2>
@@ -1096,12 +1088,12 @@ export default function InvoicePage({
                       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
                         <div 
                           onClick={() => fileInputRef.current?.click()}
-                          className="flex-1 h-24 border-2 border-dashed border-slate-200 bg-slate-50 rounded-xl flex items-center justify-center cursor-pointer transition-all overflow-hidden"
+                          className="flex-1 h-24 border-2 border-dashed border-card-border bg-secondary rounded-xl flex items-center justify-center cursor-pointer transition-all overflow-hidden"
                         >
                           {logo ? (
                             <img src={logo} alt="Logo" className="h-full w-full object-contain" />
                           ) : (
-                            <div className="flex flex-col items-center text-slate-400">
+                            <div className="flex flex-col items-center text-muted-foreground">
                               <ImageIcon size={20} />
                               <span className="text-[10px] mt-1 font-bold uppercase tracking-tighter text-center px-2">No Logo Uploaded</span>
                             </div>
@@ -1117,13 +1109,13 @@ export default function InvoicePage({
                       </div>
 
                       <input 
-                        className="w-full p-3 border border-slate-200 bg-slate-50 rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-slate-900" 
+                        className="w-full p-3 border border-card-border bg-secondary rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-foreground placeholder:text-muted-foreground" 
                         placeholder="Business Name" 
                         value={company.name}
                         onChange={e => setCompany({...company, name: e.target.value})} 
                       />
                       <input 
-                        className="w-full p-3 border border-slate-200 bg-slate-50 rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-slate-900" 
+                        className="w-full p-3 border border-card-border bg-secondary rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-foreground placeholder:text-muted-foreground" 
                         placeholder="Address" 
                         value={company.address}
                         onChange={e => setCompany({...company, address: e.target.value})} 
@@ -1131,13 +1123,13 @@ export default function InvoicePage({
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <input 
-                          className="p-3 border border-slate-200 bg-slate-50 rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-slate-900" 
+                          className="p-3 border border-card-border bg-secondary rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-foreground placeholder:text-muted-foreground" 
                           placeholder="Phone Number" 
                           value={company.phone}
                           onChange={e => setCompany({...company, phone: e.target.value})} 
                         />
                         <input 
-                          className="p-3 border border-slate-200 bg-slate-50 rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-slate-900" 
+                          className="p-3 border border-card-border bg-secondary rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-foreground placeholder:text-muted-foreground" 
                           placeholder="Email Address" 
                           value={company.email}
                           onChange={e => setCompany({...company, email: e.target.value})} 
@@ -1147,11 +1139,11 @@ export default function InvoicePage({
 
                     {/* Client Details */}
                     <section 
-                      className="p-4 md:p-6 rounded-xl border border-slate-200 bg-white transition-colors duration-300 space-y-4 shadow-sm"
+                      className="p-4 md:p-6 rounded-xl border border-card-border bg-card transition-colors duration-300 space-y-4 shadow-sm"
                     >
-                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                      <div className="flex items-center justify-between border-b border-card-border pb-2">
                         <h2 
-                          className="text-sm font-bold text-slate-900 transition-colors"
+                          className="text-sm font-bold text-foreground transition-colors"
                         >
                           Client Details
                         </h2>
@@ -1167,9 +1159,9 @@ export default function InvoicePage({
                               }}
                               defaultValue=""
                             >
-                              <option value="" disabled>Select Client</option>
+                              <option value="" disabled className="bg-card text-foreground">Select Client</option>
                               {savedClients.map(c => (
-                                <option key={c.id} value={c.id}>{c.name}</option>
+                                <option key={c.id} value={c.id} className="bg-card text-foreground">{c.name}</option>
                               ))}
                             </select>
                           </div>
@@ -1192,19 +1184,19 @@ export default function InvoicePage({
                         </button>
                       </div>
                       <input 
-                        className="w-full p-3 border border-slate-200 bg-slate-50 rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-slate-900" 
+                        className="w-full p-3 border border-card-border bg-secondary rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-foreground placeholder:text-muted-foreground" 
                         placeholder="Client Name" 
                         value={client.name}
                         onChange={e => setClient({...client, name: e.target.value})} 
                       />
                       <input 
-                        className="w-full p-3 border border-slate-200 bg-slate-50 rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-slate-900" 
+                        className="w-full p-3 border border-card-border bg-secondary rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-foreground placeholder:text-muted-foreground" 
                         placeholder="Client Address" 
                         value={client.address}
                         onChange={e => setClient({...client, address: e.target.value})} 
                       />
                       <input 
-                        className="w-full p-3 border border-slate-200 bg-slate-50 rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-slate-900" 
+                        className="w-full p-3 border border-card-border bg-secondary rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-foreground placeholder:text-muted-foreground" 
                         placeholder="Client Email" 
                         value={client.email}
                         onChange={e => setClient({...client, email: e.target.value})} 
@@ -1213,35 +1205,35 @@ export default function InvoicePage({
 
                     {/* Invoice Details */}
                     <section 
-                      className="p-4 md:p-6 rounded-xl border border-slate-200 bg-white transition-colors duration-300 space-y-4 shadow-sm"
+                      className="p-4 md:p-6 rounded-xl border border-card-border bg-card transition-colors duration-300 space-y-4 shadow-sm"
                     >
                       <h2 
-                        className="text-sm font-bold border-b border-slate-100 pb-2 text-slate-900 transition-colors"
+                        className="text-sm font-bold border-b border-card-border pb-2 text-foreground transition-colors"
                       >
                         Invoice Details
                       </h2>
                       <input 
-                        className="w-full p-3 border border-slate-200 bg-slate-50 rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-slate-900" 
+                        className="w-full p-3 border border-card-border bg-secondary rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-foreground placeholder:text-muted-foreground" 
                         placeholder="Invoice Number" 
                         value={invoice.number}
                         onChange={e => setInvoice({...invoice, number: e.target.value})} 
                       />
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Date (MM/DD/YYYY)</label>
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Date (MM/DD/YYYY)</label>
                           <input 
                             type="text"
-                            className="w-full p-3 border border-slate-200 bg-slate-50 rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-slate-900" 
+                            className="w-full p-3 border border-card-border bg-secondary rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-foreground placeholder:text-muted-foreground" 
                             value={invoice.date}
                             placeholder="MM/DD/YYYY"
                             onChange={e => setInvoice({...invoice, date: e.target.value})} 
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Due Date (MM/DD/YYYY)</label>
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Due Date (MM/DD/YYYY)</label>
                           <input 
                             type="text"
-                            className="w-full p-3 border border-slate-200 bg-slate-50 rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-slate-900" 
+                            className="w-full p-3 border border-card-border bg-secondary rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-foreground placeholder:text-muted-foreground" 
                             value={invoice.dueDate}
                             placeholder="MM/DD/YYYY"
                             onChange={e => setInvoice({...invoice, dueDate: e.target.value})} 
@@ -1252,13 +1244,13 @@ export default function InvoicePage({
 
                     {/* Line Items */}
                     <section 
-                      className="p-4 md:p-6 rounded-xl border border-slate-200 bg-white transition-colors duration-300 space-y-4 shadow-sm"
+                      className="p-4 md:p-6 rounded-xl border border-card-border bg-card transition-colors duration-300 space-y-4 shadow-sm"
                     >
                       <div 
-                        className="flex justify-between items-center border-b border-slate-100 pb-2 transition-colors"
+                        className="flex justify-between items-center border-b border-card-border pb-2 transition-colors"
                       >
                         <h2 
-                          className="text-sm font-bold text-slate-900"
+                          className="text-sm font-bold text-foreground"
                         >
                           Line Items
                         </h2>
@@ -1274,40 +1266,40 @@ export default function InvoicePage({
                         {items.map((item) => (
                           <div 
                             key={item.id} 
-                            className="flex flex-col gap-3 p-3 rounded-lg border border-slate-200 bg-slate-50 transition-colors md:grid md:grid-cols-[1fr_80px_100px_100px_40px] md:gap-3 md:items-start md:p-0 md:bg-transparent md:border-none"
+                            className="flex flex-col gap-3 p-3 rounded-lg border border-card-border bg-secondary transition-colors md:grid md:grid-cols-[1fr_80px_100px_100px_40px] md:gap-3 md:items-start md:p-0 md:bg-transparent md:border-none"
                           >
                             <div className="space-y-1.5 flex-1">
-                              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Description</label>
+                              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Description</label>
                               <input 
-                                className="w-full p-2 border border-slate-200 bg-white rounded-lg text-xs outline-none transition-colors focus:border-cyan-500 text-slate-900"
+                                className="w-full p-2 border border-card-border bg-card rounded-lg text-xs outline-none transition-colors focus:border-cyan-500 text-foreground placeholder:text-muted-foreground"
                                 placeholder="Item Name" 
                                 value={item.name} 
                                 onChange={e => updateItem(item.id, 'name', e.target.value)} 
                               />
                             </div>
                             <div className="space-y-1.5">
-                              <label className="text-[10px] font-bold uppercase tracking-widest block text-center text-slate-400">Qty</label>
+                              <label className="text-[10px] font-bold uppercase tracking-widest block text-center text-muted-foreground">Qty</label>
                               <input 
                                 type="number" 
-                                className="w-full p-2 border border-slate-200 bg-white rounded-lg text-xs text-center outline-none transition-colors focus:border-cyan-500 text-slate-900"
+                                className="w-full p-2 border border-card-border bg-card rounded-lg text-xs text-center outline-none transition-colors focus:border-cyan-500 text-foreground"
                                 value={item.qty} 
                                 onChange={e => updateItem(item.id, 'qty', e.target.value)} 
                               />
                             </div>
                             <div className="space-y-1.5">
-                              <label className="text-[10px] font-bold uppercase tracking-widest block text-right text-slate-400">Price</label>
+                              <label className="text-[10px] font-bold uppercase tracking-widest block text-right text-muted-foreground">Price</label>
                               <input 
                                 type="number" 
-                                className="w-full p-2 border border-slate-200 bg-white rounded-lg text-xs text-right outline-none transition-colors focus:border-cyan-500 text-slate-900"
+                                className="w-full p-2 border border-card-border bg-card rounded-lg text-xs text-right outline-none transition-colors focus:border-cyan-500 text-foreground"
                                 placeholder="0.00" 
                                 value={item.price} 
                                 onChange={e => updateItem(item.id, 'price', e.target.value)} 
                               />
                             </div>
                             <div className="space-y-1.5 hidden md:block">
-                              <label className="text-[10px] font-bold uppercase tracking-widest block text-right text-slate-400">Amount</label>
+                              <label className="text-[10px] font-bold uppercase tracking-widest block text-right text-muted-foreground">Amount</label>
                               <div 
-                                className="w-full p-2 border border-slate-200 bg-slate-50 rounded-lg text-xs text-right font-bold transition-colors text-slate-600"
+                                className="w-full p-2 border border-card-border bg-secondary rounded-lg text-xs text-right font-bold transition-colors text-muted"
                               >
                                 ${Math.max(0, (parseFloat(item.qty as any) || 0) * (parseFloat(item.price as any) || 0)).toFixed(2)}
                               </div>
@@ -1315,7 +1307,7 @@ export default function InvoicePage({
                             <div className="flex items-end justify-end md:pb-1">
                               <button 
                                 onClick={() => setItems(items.filter(i => i.id !== item.id))}
-                                className="p-2 rounded-lg transition-colors text-red-500 hover:bg-red-50"
+                                className="p-2 rounded-lg transition-colors text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
                               >
                                 <Trash2 size={18} />
                               </button>
@@ -1327,29 +1319,29 @@ export default function InvoicePage({
 
                     {/* Calculations */}
                     <section 
-                      className="p-4 md:p-6 rounded-xl border border-slate-200 bg-white transition-colors duration-300 space-y-4 shadow-sm"
+                      className="p-4 md:p-6 rounded-xl border border-card-border bg-card transition-colors duration-300 space-y-4 shadow-sm"
                     >
                       <h2 
-                        className="text-sm font-bold border-b border-slate-100 pb-2 text-slate-900 transition-colors"
+                        className="text-sm font-bold border-b border-card-border pb-2 text-foreground transition-colors"
                       >
                         Calculations
                       </h2>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Tax Rate (%)</label>
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Tax Rate (%)</label>
                           <input 
                             type="number" 
-                            className="w-full p-3 border border-slate-200 bg-slate-50 rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-slate-900" 
+                            className="w-full p-3 border border-card-border bg-secondary rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-foreground" 
                             placeholder="0"
                             value={taxRate}
                             onChange={e => setTaxRate(parseFloat(e.target.value) || 0)} 
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Discount (USD)</label>
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Discount (USD)</label>
                           <input 
                             type="number" 
-                            className="w-full p-3 border border-slate-200 bg-slate-50 rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-slate-900" 
+                            className="w-full p-3 border border-card-border bg-secondary rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-foreground" 
                             placeholder="0.00"
                             value={discount}
                             onChange={e => setDiscount(parseFloat(e.target.value) || 0)} 
@@ -1358,21 +1350,21 @@ export default function InvoicePage({
                       </div>
                       <div className="pt-2 space-y-2">
                         <div className="flex justify-between text-sm">
-                          <span className="text-slate-500">Subtotal:</span>
-                          <span className="font-bold text-slate-900">${Math.max(0, subtotal).toFixed(2)}</span>
+                          <span className="text-muted">Subtotal:</span>
+                          <span className="font-bold text-foreground">${Math.max(0, subtotal).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-slate-500">Tax Amount:</span>
-                          <span className="font-bold text-slate-900">${Math.max(0, taxAmount).toFixed(2)}</span>
+                          <span className="text-muted">Tax Amount:</span>
+                          <span className="font-bold text-foreground">${Math.max(0, taxAmount).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-slate-500">Discount:</span>
+                          <span className="text-muted">Discount:</span>
                           <span className="font-bold text-red-500">-${Math.max(0, discountVal).toFixed(2)}</span>
                         </div>
                         <div 
-                          className="flex justify-between text-base pt-2 border-t border-slate-100 transition-colors"
+                          className="flex justify-between text-base pt-2 border-t border-card-border transition-colors"
                         >
-                          <span className="font-bold text-slate-900">Total:</span>
+                          <span className="font-bold text-foreground">Total:</span>
                           <span className="font-black text-cyan-600">${Math.max(0, total).toFixed(2)}</span>
                         </div>
                       </div>
@@ -1380,26 +1372,26 @@ export default function InvoicePage({
 
                     {/* Payment Terms & Notes */}
                     <section 
-                      className="p-4 md:p-6 rounded-xl border border-slate-200 bg-white transition-colors duration-300 space-y-4 shadow-sm"
+                      className="p-4 md:p-6 rounded-xl border border-card-border bg-card transition-colors duration-300 space-y-4 shadow-sm"
                     >
                       <h2 
-                        className="text-sm font-bold border-b border-slate-100 pb-2 text-slate-900 transition-colors"
+                        className="text-sm font-bold border-b border-card-border pb-2 text-foreground transition-colors"
                       >
                         Payment Terms & Notes
                       </h2>
                       <div className="space-y-1">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Payment Terms</label>
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Payment Terms</label>
                         <input 
-                          className="w-full p-3 border border-slate-200 bg-slate-50 rounded-xl text-sm outline-none transition-colors focus:border-cyan-500 text-slate-900" 
+                          className="w-full p-3 border border-card-border bg-secondary rounded-xl text-sm outline-none transition-colors focus:border-cyan-500 text-foreground placeholder:text-muted-foreground" 
                           placeholder="e.g. Net 30, Due on Receipt" 
                           value={invoice.terms}
                           onChange={e => setInvoice({...invoice, terms: e.target.value})} 
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Additional Notes</label>
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Additional Notes</label>
                         <textarea 
-                          className="w-full p-3 border border-slate-200 bg-slate-50 rounded-xl text-sm outline-none transition-colors focus:border-cyan-500 min-h-[100px] text-slate-900" 
+                          className="w-full p-3 border border-card-border bg-secondary rounded-xl text-sm outline-none transition-colors focus:border-cyan-500 min-h-[100px] text-foreground placeholder:text-muted-foreground" 
                           placeholder="Any extra information..." 
                           value={notes}
                           onChange={e => setNotes(e.target.value)} 
@@ -1412,17 +1404,16 @@ export default function InvoicePage({
                 {/* RIGHT SIDE: LIVE PREVIEW */}
                 <div 
                   id="preview-section" 
-                  className="flex-1 lg:h-full flex flex-col items-center overflow-y-auto overflow-x-hidden relative transition-colors duration-300 p-4 md:p-8"
-                  style={{ backgroundColor: darkMode ? '#020617' : '#F9FAFB' }}
+                  className="flex-1 lg:h-full flex flex-col items-center overflow-y-auto overflow-x-hidden relative transition-colors duration-300 p-4 md:p-8 bg-slate-50 dark:bg-slate-900/50"
                 >
                   <div className="w-full max-w-[900px] flex flex-col items-center">
                     {/* Preview Controls */}
-                    <div className="w-full flex justify-between items-center mb-8 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm no-print">
-                      <h2 className="font-bold text-sm uppercase tracking-widest text-slate-400">Live Preview</h2>
+                    <div className="w-full flex justify-between items-center mb-8 bg-card p-4 rounded-2xl border border-card-border shadow-sm no-print">
+                      <h2 className="font-bold text-sm uppercase tracking-widest text-muted-foreground">Live Preview</h2>
                       <div className="flex items-center gap-3">
                         <button 
                           onClick={handleSave} 
-                          className="px-4 py-2 rounded-lg text-xs font-bold transition-all border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
+                          className="px-4 py-2 rounded-lg text-xs font-bold transition-all border border-card-border bg-secondary text-foreground hover:bg-secondary/80"
                         >
                           Save Progress
                         </button>
@@ -1440,7 +1431,7 @@ export default function InvoicePage({
                       </div>
                     </div>
 
-                    <div className="relative w-full flex justify-center items-start overflow-visible min-h-[600px] md:min-h-[800px]">
+                    <div className="relative w-full flex justify-center items-start overflow-visible min-h-[600px] md:min-h-[800px] bg-secondary/30 rounded-3xl p-4 md:p-10 border border-card-border/50">
                       <div 
                         id="invoice-preview" 
                         className="bg-white w-[816px] min-h-[1056px] p-8 md:p-20 flex flex-col font-sans shadow-2xl transition-transform duration-300"
@@ -1567,7 +1558,7 @@ export default function InvoicePage({
               <div className="no-print mt-20">
                 <div className="max-w-[1000px] mx-auto px-6 pb-20">
                   <section className="mb-24">
-                    <h2 className="text-3xl font-black mb-12 text-center" style={{ color: darkMode ? '#ffffff' : '#0f172a' }}>
+                    <h2 className="text-3xl font-black mb-12 text-center text-foreground">
                       Comprehensive Invoicing FAQ
                     </h2>
                     <div className="space-y-2">
