@@ -5,6 +5,7 @@ import Link from "next/link";
 import { niches } from "../constants/niches";
 import { competitors } from "../constants/competitors";
 import { states } from "../constants/states";
+import GoogleAnalytics from "../src/components/GoogleAnalytics";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -49,6 +50,7 @@ export default function RootLayout({
         {/* <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-0000000000000000" crossorigin="anonymous"></script> */}
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}>
+        <GoogleAnalytics />
         <noscript>
           <iframe
             src="https://www.googletagmanager.com/ns.html?id=GTM-N8X34ZLW"
@@ -90,50 +92,19 @@ export default function RootLayout({
               </div>
 
               <div className="col-span-1 lg:col-span-1">
-                <h3 className="text-white font-bold uppercase tracking-wider text-xs mb-4">Alternatives</h3>
+                <h3 className="text-white font-bold uppercase tracking-wider text-xs mb-4">Legal</h3>
                 <div className="flex flex-col gap-y-2">
-                  {competitors.map((comp) => (
-                    <Link 
-                      key={comp.slug} 
-                      href={`/alternatives/${comp.slug}`}
-                      className="text-sm hover:text-cyan-400 transition-colors"
-                    >
-                      Free {comp.name} Alternative
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              <div className="col-span-1 lg:col-span-1">
-                <h3 className="text-white font-bold uppercase tracking-wider text-xs mb-4">Top Regions</h3>
-                <div className="flex flex-col gap-y-2">
-                  {states.map((state) => (
-                    <Link 
-                      key={state.slug} 
-                      href={`/location/${state.slug}`}
-                      className="text-sm hover:text-cyan-400 transition-colors"
-                    >
-                      Invoice Generator {state.name}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              <div className="col-span-1 lg:col-span-1">
-                <h3 className="text-white font-bold uppercase tracking-wider text-xs mb-4">Tools</h3>
-                <div className="flex flex-col gap-y-2">
-                  <Link 
-                    href="/convert/word-to-pdf-invoice"
-                    className="text-sm hover:text-cyan-400 transition-colors"
-                  >
-                    Word to PDF Invoice
-                  </Link>
+                  <Link href="/privacy" className="text-sm hover:text-cyan-400 transition-colors">Privacy Policy</Link>
+                  <Link href="/terms" className="text-sm hover:text-cyan-400 transition-colors">Terms of Service</Link>
                 </div>
               </div>
             </div>
-            
-            <div className="pt-8 border-t border-slate-800 text-center text-xs">
-              <p>© 2026 Billcloud | Professional Invoicing for US Freelancers</p>
+            <div className="pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
+              <p className="text-xs text-slate-500">&copy; 2026 Billcloud. All Rights Reserved. US SEO Compliant.</p>
+              <div className="flex gap-6">
+                <Link href="/privacy" className="text-[10px] font-bold uppercase tracking-widest text-slate-600 hover:text-cyan-500 transition-colors">Privacy</Link>
+                <Link href="/terms" className="text-[10px] font-bold uppercase tracking-widest text-slate-600 hover:text-cyan-500 transition-colors">Terms</Link>
+              </div>
             </div>
           </div>
         </footer>

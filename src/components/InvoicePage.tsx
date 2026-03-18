@@ -551,6 +551,12 @@ export default function InvoicePage({
 
   const HeroSection = () => (
     <section className="py-24 px-6 text-center space-y-8 max-w-4xl mx-auto flex flex-col items-center justify-center min-h-[70vh]">
+      <div className="flex items-center gap-3 mb-6 bg-slate-50 dark:bg-slate-800/50 px-6 py-3 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-top-4 duration-1000">
+        <div className="bg-gradient-to-br from-[#22d3ee] to-[#0891b2] w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-lg shadow-lg shadow-cyan-500/20">
+          B
+        </div>
+        <span className="text-lg font-bold tracking-tight text-slate-400 uppercase tracking-widest">Billcloud</span>
+      </div>
       <h1 className="text-5xl md:text-7xl font-black tracking-tight text-foreground leading-tight">
         Professional Invoicing for <br/> <span className="text-cyan-500">US Freelancers</span>. 100% Free.
       </h1>
