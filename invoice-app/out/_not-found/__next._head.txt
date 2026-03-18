@@ -1,0 +1,6 @@
+1:"$Sreact.fragment"
+2:I[41806,["/_next/static/chunks/627a2593319ce06b.js"],"ViewportBoundary"]
+3:I[41806,["/_next/static/chunks/627a2593319ce06b.js"],"MetadataBoundary"]
+4:"$Sreact.suspense"
+5:I[99329,["/_next/static/chunks/627a2593319ce06b.js"],"IconMark"]
+0:{"buildId":"-hOL2n7lClOVYSHzCs5U5","rsc":["$","$1","h",{"children":[["$","meta",null,{"name":"robots","content":"noindex"}],["$","$L2",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]}],["$","div",null,{"hidden":true,"children":["$","$L3",null,{"children":["$","$4",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"Free US Invoice Generator | Create Professional PDF Invoices Online"}],["$","meta","1",{"name":"description","content":"Create, print, and download professional US-standard invoices. No sign-up, 100% free for freelancers and small businesses. US Letter standard compliant."}],["$","link","2",{"rel":"icon","href":"/icon.svg?icon.fecdac5a.svg","sizes":"any","type":"image/svg+xml"}],["$","$L5","3",{}]]}]}]}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}],"loading":null,"isPartial":false}
