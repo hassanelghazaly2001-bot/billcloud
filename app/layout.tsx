@@ -61,7 +61,7 @@ export default function RootLayout({
         </noscript>
         <main className="flex-grow">{children}</main>
 
-        <footer className="no-print bg-slate-900 text-slate-300 py-12 border-t border-slate-800">
+        <footer className="no-print bg-card text-muted-foreground py-12 border-t border-card-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8 mb-12">
               <div className="col-span-1 md:col-span-2">
@@ -69,7 +69,7 @@ export default function RootLayout({
                   <div className="bg-gradient-to-br from-[#22d3ee] to-[#0891b2] w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-lg">
                     B
                   </div>
-                  <span className="text-xl font-bold text-white tracking-tight">Billcloud</span>
+                  <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Billcloud</span>
                 </Link>
                 <p className="text-sm leading-relaxed max-w-md">
                   Professional Invoicing for US Freelancers. Create, print, and download high-quality invoices in seconds. Optimized for US Letter standard and tax-compliant layouts.
@@ -77,7 +77,7 @@ export default function RootLayout({
               </div>
               
               <div className="col-span-1 lg:col-span-2">
-                <h3 className="text-white font-bold uppercase tracking-wider text-xs mb-4">Invoice Templates</h3>
+                <h3 className="text-foreground font-bold uppercase tracking-wider text-xs mb-4">Invoice Templates</h3>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                   {niches.map((niche) => (
                     <Link 
@@ -92,18 +92,18 @@ export default function RootLayout({
               </div>
 
               <div className="col-span-1 lg:col-span-1">
-                <h3 className="text-white font-bold uppercase tracking-wider text-xs mb-4">Legal</h3>
+                <h3 className="text-foreground font-bold uppercase tracking-wider text-xs mb-4">Legal</h3>
                 <div className="flex flex-col gap-y-2">
                   <Link href="/privacy" className="text-sm hover:text-cyan-400 transition-colors">Privacy Policy</Link>
                   <Link href="/terms" className="text-sm hover:text-cyan-400 transition-colors">Terms of Service</Link>
                 </div>
               </div>
             </div>
-            <div className="pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
-              <p className="text-xs text-slate-500">&copy; 2026 Billcloud. All Rights Reserved. US SEO Compliant.</p>
+            <div className="pt-8 border-t border-card-border flex flex-col md:flex-row justify-between items-center gap-4">
+              <p className="text-xs text-muted-foreground">&copy; 2026 Billcloud. All Rights Reserved. US SEO Compliant.</p>
               <div className="flex gap-6">
-                <Link href="/privacy" className="text-[10px] font-bold uppercase tracking-widest text-slate-600 hover:text-cyan-500 transition-colors">Privacy</Link>
-                <Link href="/terms" className="text-[10px] font-bold uppercase tracking-widest text-slate-600 hover:text-cyan-500 transition-colors">Terms</Link>
+                <Link href="/privacy" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-cyan-500 transition-colors">Privacy</Link>
+                <Link href="/terms" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-cyan-500 transition-colors">Terms</Link>
               </div>
             </div>
           </div>

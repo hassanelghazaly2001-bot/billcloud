@@ -108,8 +108,8 @@ export default function InvoicePage({
     }
   }, [darkMode]);
   const [logo, setLogo] = useState<string | null>(null);
-  const [company, setCompany] = useState({ name: '', address: '', phone: '', email: '' });
-  const [client, setClient] = useState({ name: '', address: '', email: '' });
+  const [company, setCompany] = useState({ name: '', address: '', phone: '', email: '', taxId: '' });
+  const [client, setClient] = useState({ name: '', address: '', email: '', phone: '' });
   
   // My Invoices & Clients state
   const [savedInvoices, setSavedInvoices] = useState<any[]>([]);
@@ -136,6 +136,7 @@ export default function InvoicePage({
   const [items, setItems] = useState([{ id: 1, name: '', qty: 1, price: 0 }]);
   const [taxRate, setTaxRate] = useState(0);
   const [discount, setDiscount] = useState(0);
+  const [discountType, setDiscountType] = useState<'flat' | 'percent'>('flat');
   const [notes, setNotes] = useState(defaultNotes);
   const [scale, setScale] = useState(0.7);
   const [toast, setToast] = useState<{ message: string, visible: boolean }>({ message: '', visible: false });
@@ -249,9 +250,14 @@ export default function InvoicePage({
     const amount = qty * price;
     return acc + (isNaN(amount) ? 0 : amount);
   }, 0);
-  const taxAmount = Math.max(0, (subtotal * Math.max(0, parseFloat(taxRate as any) || 0)) / 100);
-  const discountVal = Math.max(0, parseFloat(discount as any) || 0);
-  const total = Math.max(0, subtotal + taxAmount - discountVal);
+  
+  const discountVal = discountType === 'percent' 
+    ? (subtotal * (Math.max(0, parseFloat(discount as any) || 0) / 100))
+    : Math.max(0, parseFloat(discount as any) || 0);
+    
+  const taxableAmount = Math.max(0, subtotal - discountVal);
+  const taxAmount = (taxableAmount * (Math.max(0, parseFloat(taxRate as any) || 0) / 100));
+  const total = taxableAmount + taxAmount;
 
   const updateItem = (id: number, field: string, value: any) => {
     setItems(items.map(item => {
@@ -290,8 +296,8 @@ export default function InvoicePage({
         ignoreElements: (el) => el.classList.contains('exclude-from-pdf')
       }); 
       const imgData = canvas.toDataURL('image/png'); 
-      const pdf = new jsPDF('p', 'in', 'letter'); 
-      pdf.addImage(imgData, 'PNG', 0, 0, 8.5, 11); 
+      const pdf = new jsPDF('p', 'mm', 'a4'); 
+      pdf.addImage(imgData, 'PNG', 0, 0, 210, 297); 
       pdf.save(`Billcloud_Invoice_${invoice.number}.pdf`);
       
       // Auto-save client if new
@@ -551,12 +557,6 @@ export default function InvoicePage({
 
   const HeroSection = () => (
     <section className="py-24 px-6 text-center space-y-8 max-w-4xl mx-auto flex flex-col items-center justify-center min-h-[70vh]">
-      <div className="flex items-center gap-3 mb-6 bg-slate-50 dark:bg-slate-800/50 px-6 py-3 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-top-4 duration-1000">
-        <div className="bg-gradient-to-br from-[#22d3ee] to-[#0891b2] w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-lg shadow-lg shadow-cyan-500/20">
-          B
-        </div>
-        <span className="text-lg font-bold tracking-tight text-slate-400 uppercase tracking-widest">Billcloud</span>
-      </div>
       <h1 className="text-5xl md:text-7xl font-black tracking-tight text-foreground leading-tight">
         Professional Invoicing for <br/> <span className="text-cyan-500">US Freelancers</span>. 100% Free.
       </h1>
@@ -1154,6 +1154,12 @@ export default function InvoicePage({
                           onChange={e => setCompany({...company, email: e.target.value})} 
                         />
                       </div>
+                      <input 
+                        className="w-full p-3 border border-card-border bg-secondary rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-foreground placeholder:text-muted-foreground" 
+                        placeholder="Tax ID / EIN (Optional)" 
+                        value={company.taxId}
+                        onChange={e => setCompany({...company, taxId: e.target.value})} 
+                      />
                     </section>
 
                     {/* Client Details */}
@@ -1219,6 +1225,12 @@ export default function InvoicePage({
                         placeholder="Client Email" 
                         value={client.email}
                         onChange={e => setClient({...client, email: e.target.value})} 
+                      />
+                      <input 
+                        className="w-full p-3 border border-card-border bg-secondary rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-foreground placeholder:text-muted-foreground" 
+                        placeholder="Client Phone (Optional)" 
+                        value={client.phone}
+                        onChange={e => setClient({...client, phone: e.target.value})} 
                       />
                     </section>
 
@@ -1357,14 +1369,24 @@ export default function InvoicePage({
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Discount (USD)</label>
-                          <input 
-                            type="number" 
-                            className="w-full p-3 border border-card-border bg-secondary rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-foreground" 
-                            placeholder="0.00"
-                            value={discount}
-                            onChange={e => setDiscount(parseFloat(e.target.value) || 0)} 
-                          />
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Discount</label>
+                          <div className="flex gap-2">
+                            <input 
+                              type="number" 
+                              className="flex-1 p-3 border border-card-border bg-secondary rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-foreground" 
+                              placeholder="0.00"
+                              value={discount}
+                              onChange={e => setDiscount(parseFloat(e.target.value) || 0)} 
+                            />
+                            <select 
+                              className="p-3 border border-card-border bg-secondary rounded-lg text-sm outline-none transition-colors focus:border-cyan-500 text-foreground"
+                              value={discountType}
+                              onChange={(e) => setDiscountType(e.target.value as any)}
+                            >
+                              <option value="flat">$</option>
+                              <option value="percent">%</option>
+                            </select>
+                          </div>
                         </div>
                       </div>
                       <div className="pt-2 space-y-2">
@@ -1453,80 +1475,79 @@ export default function InvoicePage({
                     <div className="relative w-full flex justify-center items-start overflow-visible min-h-[600px] md:min-h-[800px] bg-secondary/30 rounded-3xl p-4 md:p-10 border border-card-border/50">
                       <div 
                         id="invoice-preview" 
-                        className="bg-white w-[816px] min-h-[1056px] p-8 md:p-20 flex flex-col font-sans shadow-2xl transition-transform duration-300"
+                        className="bg-white w-[794px] min-h-[1123px] p-8 md:p-16 flex flex-col font-sans shadow-2xl transition-transform duration-300"
                         style={{ 
                           transform: `scale(${scale})`, 
                           transformOrigin: 'top center',
-                          marginBottom: `-${1056 * (1 - scale)}px`,
+                          marginBottom: `-${1123 * (1 - scale)}px`,
                           color: '#1e293b',
                           backgroundColor: '#ffffff'
                         }}
                       >
-                        {/* Top Section: Logo & Company */}
-                        <div className="flex justify-between items-start mb-16">
+                        {/* Top Section: Title & Details */}
+                        <div className="flex justify-between items-start mb-12 border-b-2 pb-8" style={{ borderColor: '#f1f5f9' }}>
                           <div className="flex-1">
-                            {logo ? (
-                              <img src={logo} alt="Company Logo" className="h-16 object-contain mb-6" />
-                            ) : (
-                              <div className="h-16 w-16 rounded-lg flex items-center justify-center mb-6 italic text-xs border" style={{ backgroundColor: '#f8fafc', borderColor: '#f1f5f9', color: '#64748b' }}>Logo</div>
-                            )}
-                            <h2 className="text-2xl font-bold leading-tight mb-2" style={{ color: '#0f172a' }}>{company.name || 'Your Company Name'}</h2>
-                            <div className="space-y-1 text-sm" style={{ color: '#64748b' }}>
-                              <p>{company.address || 'Company Address'}</p>
-                              <p>{company.phone || 'Phone Number'}</p>
-                              <p>{company.email || 'Email'}</p>
+                            <h1 className="text-6xl font-black uppercase tracking-tighter mb-4" style={{ color: '#0f172a' }}>INVOICE</h1>
+                            <div className="space-y-1 text-sm font-bold uppercase tracking-widest" style={{ color: '#64748b' }}>
+                              <p>Invoice #: <span style={{ color: '#0f172a' }}>{invoice.number}</span></p>
+                              <p>Issue Date: <span style={{ color: '#0f172a' }}>{invoice.date}</span></p>
+                              <p>Due Date: <span style={{ color: '#0f172a' }}>{invoice.dueDate}</span></p>
                             </div>
                           </div>
-                          <div className="text-right flex-1">
-                            <h2 className="text-5xl font-black uppercase tracking-tight mb-6" style={{ color: '#06b6d4' }}>INVOICE</h2>
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-end gap-2">
-                                <span className="font-bold" style={{ color: '#0f172a' }}>Invoice #:</span>
-                                <span style={{ color: '#475569' }}>{invoice.number}</span>
-                              </div>
-                              <div className="flex justify-end gap-2">
-                                <span className="font-bold" style={{ color: '#0f172a' }}>Date:</span>
-                                <span style={{ color: '#475569' }}>{invoice.date}</span>
-                              </div>
-                              <div className="flex justify-end gap-2">
-                                <span className="font-bold" style={{ color: '#0f172a' }}>Due Date:</span>
-                                <span style={{ color: '#475569' }}>{invoice.dueDate}</span>
-                              </div>
-                            </div>
+                          <div className="flex flex-col items-end">
+                            {logo ? (
+                              <img src={logo} alt="Company Logo" className="h-16 object-contain mb-4" />
+                            ) : (
+                              <div className="h-16 w-16 rounded-xl flex items-center justify-center mb-4 italic text-[10px] font-bold uppercase tracking-widest border border-dashed" style={{ backgroundColor: '#f8fafc', borderColor: '#e2e8f0', color: '#94a3b8' }}>Logo</div>
+                            )}
                           </div>
                         </div>
 
-                        {/* Client Details */}
-                        <div className="mb-12">
-                          <p className="text-lg font-bold mb-2" style={{ color: '#0f172a' }}>Bill To:</p>
-                          <h3 className="text-xl font-bold mb-2" style={{ color: '#1e293b' }}>{client.name || 'Client Name'}</h3>
-                          <div className="text-sm space-y-1" style={{ color: '#64748b' }}>
-                            <p>{client.address}</p>
-                            <p className="font-medium" style={{ color: '#0891b2' }}>{client.email}</p>
+                        {/* Info Section: Company vs Client */}
+                        <div className="grid grid-cols-2 gap-12 mb-16">
+                          <div>
+                            <p className="text-[10px] font-black uppercase tracking-widest mb-3" style={{ color: '#94a3b8' }}>From:</p>
+                            <h2 className="text-xl font-bold mb-2" style={{ color: '#0f172a' }}>{company.name || 'Your Company Name'}</h2>
+                            <div className="space-y-1 text-sm leading-relaxed" style={{ color: '#64748b' }}>
+                              <p className="whitespace-pre-wrap">{company.address || 'Company Address'}</p>
+                              <p>{company.phone}</p>
+                              <p>{company.email}</p>
+                              {company.taxId && <p className="pt-1 font-bold text-xs uppercase tracking-widest" style={{ color: '#475569' }}>Tax ID: {company.taxId}</p>}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[10px] font-black uppercase tracking-widest mb-3" style={{ color: '#94a3b8' }}>Bill To:</p>
+                            <h2 className="text-xl font-bold mb-2" style={{ color: '#0f172a' }}>{client.name || 'Client Name'}</h2>
+                            <div className="space-y-1 text-sm leading-relaxed" style={{ color: '#64748b' }}>
+                              <p className="whitespace-pre-wrap">{client.address || 'Client Address'}</p>
+                              <p>{client.phone}</p>
+                              <p className="font-medium" style={{ color: '#0891b2' }}>{client.email}</p>
+                            </div>
                           </div>
                         </div>
 
                         {/* Items Table */}
                         <div className="flex-1">
-                          <table className="w-full mb-10 border-collapse">
+                          <table className="w-full mb-12 border-collapse">
                             <thead>
-                              <tr style={{ backgroundColor: '#06b6d4', color: '#ffffff' }} className="text-sm">
-                                <th className="py-4 px-6 text-left font-bold rounded-l-lg">Description</th>
-                                <th className="py-4 px-4 text-center font-bold w-24">Qty</th>
-                                <th className="py-4 px-4 text-center font-bold w-32">Unit Price</th>
-                                <th className="py-4 px-6 text-right font-bold w-32 rounded-r-lg">Amount</th>
+                              <tr className="text-[10px] font-black uppercase tracking-widest border-y-2" style={{ borderColor: '#0f172a', color: '#0f172a' }}>
+                                <th className="py-4 text-left">Description</th>
+                                <th className="py-4 text-center w-24">Quantity</th>
+                                <th className="py-4 text-center w-32">Rate</th>
+                                <th className="py-4 text-right w-32">Total</th>
                               </tr>
                             </thead>
                             <tbody className="text-sm">
                               {items.map((item, index) => (
                                 <tr 
                                   key={item.id} 
-                                  style={{ borderBottom: index === items.length - 1 ? 'none' : '1px solid #f1f5f9' }}
+                                  className="border-b"
+                                  style={{ borderColor: '#f1f5f9' }}
                                 >
-                                  <td className="py-5 px-6 font-medium" style={{ color: '#1e293b' }}>{item.name || 'Description of service'}</td>
-                                  <td className="py-5 px-4 text-center" style={{ color: '#475569' }}>{item.qty}</td>
-                                  <td className="py-5 px-4 text-center" style={{ color: '#475569' }}>${(parseFloat(item.price as any) || 0).toFixed(2)}</td>
-                                  <td className="py-5 px-6 text-right font-bold" style={{ color: '#0f172a' }}>${Math.max(0, (parseFloat(item.qty as any) || 0) * (parseFloat(item.price as any) || 0)).toFixed(2)}</td>
+                                  <td className="py-6 font-medium pr-8" style={{ color: '#1e293b' }}>{item.name || 'Description of service'}</td>
+                                  <td className="py-6 text-center" style={{ color: '#475569' }}>{item.qty}</td>
+                                  <td className="py-6 text-center" style={{ color: '#475569' }}>${(parseFloat(item.price as any) || 0).toFixed(2)}</td>
+                                  <td className="py-6 text-right font-bold" style={{ color: '#0f172a' }}>${Math.max(0, (parseFloat(item.qty as any) || 0) * (parseFloat(item.price as any) || 0)).toFixed(2)}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -1558,12 +1579,12 @@ export default function InvoicePage({
                               <span className="font-bold" style={{ color: '#0f172a' }}>${Math.max(0, taxAmount).toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between text-sm">
-                              <span style={{ color: '#64748b' }}>Discount</span>
+                              <span style={{ color: '#64748b' }}>Discount {discountType === 'percent' ? `(${discount}%)` : ''}</span>
                               <span className="font-bold" style={{ color: '#ef4444' }}>-${Math.max(0, discountVal).toFixed(2)}</span>
                             </div>
-                            <div className="flex justify-between items-center pt-4 border-t" style={{ borderColor: '#f1f5f9' }}>
-                              <span className="text-lg font-bold" style={{ color: '#0f172a' }}>Total:</span>
-                              <span className="text-3xl font-black" style={{ color: '#06b6d4' }}>${Math.max(0, total).toFixed(2)}</span>
+                            <div className="flex justify-between items-center pt-4 border-t-2" style={{ borderColor: '#0f172a' }}>
+                              <span className="text-lg font-bold uppercase tracking-widest" style={{ color: '#0f172a' }}>Total:</span>
+                              <span className="text-3xl font-black" style={{ color: '#0f172a' }}>${Math.max(0, total).toFixed(2)}</span>
                             </div>
                           </div>
                         </div>
